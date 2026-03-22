@@ -1,25 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const knex = require("../database/db");
+const db = require("../database/db");
 const authenticateToken = require("../middleware/auth");
 
-router.post("/save", authenticateToken, async (req, res) => {
+router.post("/save", authenticateToken, (req, res) => {
   const { city, state, monthlyBill, roofSize, results } = req.body;
-  const userId = req.user.id;
-
   try {
-    await knex("reports").insert({
-      user_id: userId,
-      city, state,
-      monthly_bill: monthlyBill,
-      roof_size: roofSize,
-      system_capacity: results.systemCapacityKW,
-      annual_savings: results.annualSavings,
-      payback_years: results.paybackYears,
-      co2_offset: results.co2OffsetKg,
-      trees_equivalent: results.treesEquivalent,
-      lifetime_savings: results.lifeTimeSavings
-    });
+    db.prepare(`
+      INSERT INTO reports (
+        user_id, city, state, monthly_bill, roof_size,
+        system_capacity, annual_savings, payback_years,
+        co2_offset, trees_equivalent, lifetime_savings
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      req.user.id, city, state, monthlyBill, roofSize,
+      results.systemCapacityKW, results.annualSavings,
+      results.paybackYears, results.co2OffsetKg,
+      results.treesEquivalent, results.lifeTimeSavings
+    );
     res.json({ success: true, message: "Report saved!" });
   } catch (err) {
     console.error(err);
@@ -27,11 +25,11 @@ router.post("/save", authenticateToken, async (req, res) => {
   }
 });
 
-router.get("/my-reports", authenticateToken, async (req, res) => {
+router.get("/my-reports", authenticateToken, (req, res) => {
   try {
-    const reports = await knex("reports")
-      .where({ user_id: req.user.id })
-      .orderBy("created_at", "desc");
+    const reports = db.prepare(
+      "SELECT * FROM reports WHERE user_id = ? ORDER BY created_at DESC"
+    ).all(req.user.id);
     res.json({ success: true, reports });
   } catch (err) {
     console.error(err);
@@ -39,15 +37,15 @@ router.get("/my-reports", authenticateToken, async (req, res) => {
   }
 });
 
-router.delete("/:id", authenticateToken, async (req, res) => {
+router.delete("/:id", authenticateToken, (req, res) => {
   try {
-    await knex("reports")
-      .where({ id: req.params.id, user_id: req.user.id })
-      .delete();
-    res.json({ success: true, message: "Report deleted" });
+    db.prepare(
+      "DELETE FROM reports WHERE id = ? AND user_id = ?"
+    ).run(req.params.id, req.user.id);
+    res.json({ success: true, message: "Deleted" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Could not delete report" });
+    res.status(500).json({ error: "Could not delete" });
   }
 });
 

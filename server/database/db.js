@@ -1,45 +1,36 @@
-const knex = require("knex")({
-  client: "sqlite3",
-  connection: {
-    filename: "./database/solar.db"
-  },
-  useNullAsDefault: true
-});
+const path = require("path");
+const Database = require("better-sqlite3");
 
-async function initDB() {
-  const hasUsers = await knex.schema.hasTable("users");
-  if (!hasUsers) {
-    await knex.schema.createTable("users", (table) => {
-      table.increments("id").primary();
-      table.string("name").notNullable();
-      table.string("email").unique().notNullable();
-      table.string("password").notNullable();
-      table.timestamp("created_at").defaultTo(knex.fn.now());
-    });
-  }
+const db = new Database(path.join(__dirname, "solar.db"));
 
-  const hasReports = await knex.schema.hasTable("reports");
-  if (!hasReports) {
-    await knex.schema.createTable("reports", (table) => {
-      table.increments("id").primary();
-      table.integer("user_id").notNullable();
-      table.string("city");
-      table.string("state");
-      table.float("monthly_bill");
-      table.float("roof_size");
-      table.float("system_capacity");
-      table.float("annual_savings");
-      table.float("payback_years");
-      table.float("co2_offset");
-      table.integer("trees_equivalent");
-      table.float("lifetime_savings");
-      table.timestamp("created_at").defaultTo(knex.fn.now());
-    });
-  }
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-  console.log("Database ready!");
-}
+db.exec(`
+  CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    city TEXT,
+    state TEXT,
+    monthly_bill REAL,
+    roof_size REAL,
+    system_capacity REAL,
+    annual_savings REAL,
+    payback_years REAL,
+    co2_offset REAL,
+    trees_equivalent INTEGER,
+    lifetime_savings REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
-initDB();
+console.log("Database ready!");
 
-module.exports = knex;
+module.exports = db;
