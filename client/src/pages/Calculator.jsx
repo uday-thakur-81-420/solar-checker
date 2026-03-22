@@ -19,7 +19,7 @@ function Calculator() {
     setSaved(false)
     setLastForm(formData)
     try {
-      const response = await axios.post("http://localhost:5000/api/solar/calculate", formData)
+      const response = await axios.post("https://solar-checker-api.onrender.com", formData)
       setResults(response.data)
     } catch (err) {
       setError("Something went wrong. Please try again.")
