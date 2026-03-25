@@ -18,8 +18,12 @@ function Calculator() {
     setError(null)
     setSaved(false)
     setLastForm(formData)
+
     try {
-      const response = await axios.post("https://solar-checker-api.onrender.com", formData)
+      const response = await axios.post(
+        "https://solar-checker-api.onrender.com/api/solar/calculate",
+        formData
+      )
       setResults(response.data)
     } catch (err) {
       setError("Something went wrong. Please try again.")
@@ -31,10 +35,17 @@ function Calculator() {
   const saveReport = async () => {
     try {
       const token = localStorage.getItem("token")
-      await axios.post("http://localhost:5000/api/reports/save",
+
+      await axios.post(
+        "https://solar-checker-api.onrender.com/api/reports/save",
         { ...lastForm, results: results.results },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       )
+
       setSaved(true)
     } catch (err) {
       alert("Could not save. Please login first.")
@@ -51,24 +62,44 @@ function Calculator() {
     <div className="app">
       <nav className="navbar">
         <div className="logo" onClick={() => navigate("/")}>SolarCheck</div>
+
         <div className="nav-links">
           {user.name && <span className="nav-user">Hi, {user.name}</span>}
-          {user.name && <button onClick={() => navigate("/dashboard")} className="btn-outline">Dashboard</button>}
-          {user.name && <button onClick={logout} className="btn-outline">Logout</button>}
-          {!user.name && <button onClick={() => navigate("/login")} className="btn-primary">Login</button>}
+          {user.name && (
+            <button onClick={() => navigate("/dashboard")} className="btn-outline">
+              Dashboard
+            </button>
+          )}
+          {user.name && (
+            <button onClick={logout} className="btn-outline">
+              Logout
+            </button>
+          )}
+          {!user.name && (
+            <button onClick={() => navigate("/login")} className="btn-primary">
+              Login
+            </button>
+          )}
         </div>
       </nav>
+
       <main>
         <InputForm onSubmit={handleSubmit} loading={loading} />
+
         {error && <p className="error">{error}</p>}
+
         {results && (
           <>
             <div className="save-bar">
-              {!saved
-                ? <button onClick={saveReport} className="save-btn">Save This Report</button>
-                : <p className="saved-msg">Report saved to your dashboard!</p>
-              }
+              {!saved ? (
+                <button onClick={saveReport} className="save-btn">
+                  Save This Report
+                </button>
+              ) : (
+                <p className="saved-msg">Report saved to your dashboard!</p>
+              )}
             </div>
+
             <Results data={results} />
           </>
         )}
